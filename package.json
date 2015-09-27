@@ -1,0 +1,21 @@
+{
+  "name": "geojson2obj",
+  "version": "1.0.0",
+  "description": "Convert GeoJSON into Wavefront OBJ format",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "geojson",
+    "wavefront",
+    "obj"
+  ],
+  "author": "Per Liedman <per@liedman.net>",
+  "license": "ISC",
+  "dependencies": {
+    "extend": "^3.0.0",
+    "proj4": "^2.3.10",
+    "turf-meta": "^1.0.2"
+  }
+}
