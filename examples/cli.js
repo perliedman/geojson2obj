@@ -2,8 +2,18 @@
 
 var convert = require('../'),
     fs = require('fs'),
-    geojson = JSON.parse(fs.readFileSync(process.argv[2]));
+    geojson = JSON.parse(fs.readFileSync(process.argv[2])),
+    mtl = process.argv[3],
+    mtllibs = process.argv.slice(4),
+    options = {
+        coordToPoint: convert.findLocalProj(geojson),
+        mtllib: mtllibs
+    };
 
-convert.toObj(geojson, process.stdout, {
-    coordToPoint: convert.findLocalProj(geojson)
-});
+if (mtl) {
+    options.featureMaterial = function() {
+        return mtl;
+    };
+}
+
+convert.toObj(geojson, process.stdout, options);
