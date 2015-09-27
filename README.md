@@ -23,10 +23,15 @@ Available options:
 * `featureName`: a function `f(feature)` that returns the OBJ group
   name used for a feature; by default a function that numbers the
   features
+* `featureMaterial`: a function `f(feature)` that returns the name
+  of the material for a feature; if undefined, the material is
+  not changed for this feature; see `mtllib` option below
 * `coordToPoint` a function `f(coordinate)` that returns the
   OBJ vertex point (X and Z) for a GeoJSON coordinate, needed to
   convert from GeoJSON's WGS84 coordinates to a cartesian coordinate;
   see the `findLocalProj` method below
+* `mtllib` a string or array of paths that will be added as material
+  libraries to the resulting OBJ
 
 ### findLocalProj(geojson)
 
