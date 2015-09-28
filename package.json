@@ -16,7 +16,6 @@
   "dependencies": {
     "earcut": "^2.0.2",
     "extend": "^3.0.0",
-    "proj4": "^2.3.10",
-    "turf-meta": "^1.0.2"
+    "turf-buffer": "^1.0.4"
   }
 }

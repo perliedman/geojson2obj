@@ -1,35 +1,40 @@
 var extend = require('extend'),
-    proj4 = require('proj4'),
     earcut = require('earcut'),
-    coordReduce = require('turf-meta').coordReduce,
+    buffer = require('turf-buffer'),
+    polygonFaces = function(vertices, baseIndex) {
+        return vertices.map(function(v, i) {
+            return [
+                (i * 2) + baseIndex,
+                (i * 2) + 2 + baseIndex,
+                (i * 2) + 3 + baseIndex,
+                (i * 2) + 1 + baseIndex
+            ];
+        });
+    },
+    polygonTopSurface = function(vertices, baseIndex) {
+        return [vertices.map(function(v, i) {
+            return (i * 2 + 1) + baseIndex;
+        })];
+    },
+    transforms = {
+        'LineString': function(f, options) {
+            return buffer(f, options.lineWidth(f) / 2, 'meters');
+        }
+    },
     verticesFunc = {
         'Polygon': function(coordinates) {
-            var coordArrays = coordinates.map(function(ring) {
-                return ring.map(function(c) {
-                    return c;
-                });
-            });
             // Flatten
-            return [].concat.apply([], coordArrays);
+            return [].concat.apply([], coordinates);
         }
     },
     surfacesFunc = {
         'Polygon': function(coordinates, vertices, baseIndex) {
             var vs = vertices.slice(0, vertices.length - 1),
-                faces = vs.map(function(v, i) {
-                    return [
-                        (i * 2) + baseIndex,
-                        (i * 2) + 2 + baseIndex,
-                        (i * 2) + 3 + baseIndex,
-                        (i * 2) + 1 + baseIndex
-                    ];
-                });
+                faces = polygonFaces(vs, baseIndex);
 
             if (coordinates.length === 1) {
                 // Simple top surface
-                faces = faces.concat([vs.map(function(v, i) {
-                    return (i * 2 + 1) + baseIndex;
-                })]);
+                faces = faces.concat(polygonTopSurface(vs, baseIndex));
             } else {
                 // Triangulate top surface
                 var flatPolyCoords = [].concat.apply([], vs),
@@ -49,11 +54,15 @@ function featuresToObj(features, stream, options) {
     var nIndices = 1;
 
     features.forEach(function(f) {
+        var transform = transforms[f.geometry.type],
+            geom = transform ? transform(f, options).geometry : f.geometry;
+        if (transform) console.log(geom);
+
         var baseZ = options.featureBase(f),
             topZ = baseZ + options.featureHeight(f),
             materialName = options.featureMaterial(f),
-            vertices = verticesFunc[f.geometry.type](f.geometry.coordinates).map(options.coordToPoint),
-            surfaces = surfacesFunc[f.geometry.type](f.geometry.coordinates, vertices, nIndices);
+            vertices = verticesFunc[geom.type](geom.coordinates).map(options.coordToPoint),
+            surfaces = surfacesFunc[geom.type](geom.coordinates, vertices, nIndices);
 
         stream.write('g ' + options.featureName(f) + '\n');
 
@@ -84,6 +93,9 @@ module.exports = {
             featureHeight: function() {
                 return 10;
             },
+            lineWidth: function() {
+                return 2;
+            },
             featureName: (function() {
                 var featureNumber = 0;
                 return function() {
@@ -107,23 +119,5 @@ module.exports = {
         });
 
         return featuresToObj(geojson, stream, options);
-    },
-    findLocalProj: function(geojson) {
-        var cs = coordReduce(geojson, function(memo, c) {
-                memo.sum[0] += c[0];
-                memo.sum[1] += c[1];
-                memo.nCoords++;
-                return memo;
-            }, {
-                sum: [0, 0],
-                nCoords: 0
-            }),
-            clat = cs.sum[1] / cs.nCoords,
-            clon = cs.sum[0] / cs.nCoords,
-            proj = proj4(proj4.WGS84, '+proj=tmerc +lat_0=' + clat + ' +lon_0=' + clon + ' +k=1.000000 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs');
-
-        return function(c) {
-            return proj.forward(c);
-        };
     }
 };

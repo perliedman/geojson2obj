@@ -19,7 +19,10 @@ Available options:
 * `featureBase`: function `f(feature)` that returns the height of
   a feature's base; by default, a function that always returns 0.
 * `featureHeight`: function `f(feature)` that returns the height of
-  a feature; by default, a function that always returns 10.
+  a feature; by default, a function that returns 10 for polygons and
+  0.3 for linestrings.
+* `lineWidth`: for line geometries, returns the width of the generated
+  geometry; defaults to 2.
 * `featureName`: a function `f(feature)` that returns the OBJ group
   name used for a feature; by default a function that numbers the
   features
@@ -32,14 +35,3 @@ Available options:
   see the `findLocalProj` method below
 * `mtllib` a string or array of paths that will be added as material
   libraries to the resulting OBJ
-
-### findLocalProj(geojson)
-
-A helper function that, given a GeoJSON object, returns a function
-that can be used for as `coordToPoint`.
-
-A suitable transversal mercator projection will be calculated, which
-will convert WGS84 coordinates to meter units.
-
-Note that this projection will only work reasonably close to the
-GeoJSON's center coordinate.
