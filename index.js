@@ -112,7 +112,7 @@ module.exports = {
         }, options);
 
         geojson = geojson.features || [geojson];
-        var mtllib = options.mtllib.length ? options.mtllib : [options.mtllib];
+        var mtllib = Array.isArray(options.mtllib) ? options.mtllib : [options.mtllib];
 
         mtllib.forEach(function(mtllib) {
             stream.write('mtllib ' + mtllib + '\n');
