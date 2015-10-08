@@ -38,11 +38,12 @@ var extend = require('extend'),
             } else {
                 // Triangulate top surface
                 var flatPolyCoords = [].concat.apply([], vs),
-                    holeIndices = coordinates.slice(2).reduce(function(holeIndices, ring, i, arr) {
-                        holeIndices.push(arr[i - 1].length);
+                    holeIndices = coordinates.slice(2).reduce(function(holeIndices, ring, i) {
+                        var prevHoleIndex = holeIndices[holeIndices.length - 1];
+                        holeIndices.push(prevHoleIndex + coordinates[i + 1].length * 2);
                         return holeIndices;
-                    }, [coordinates[0].length]),
-                    triIndices = earcut(flatPolyCoords, holeIndices);
+                    }, [coordinates[0].length * 2]);
+                var triIndices = earcut(flatPolyCoords, holeIndices);
                 [].concat.apply(faces, triIndices);
             }
 
@@ -56,7 +57,6 @@ function featuresToObj(features, stream, options) {
     features.forEach(function(f) {
         var transform = transforms[f.geometry.type],
             geom = transform ? transform(f, options).geometry : f.geometry;
-        if (transform) console.log(geom);
 
         var baseZ = options.featureBase(f),
             topZ = baseZ + options.featureHeight(f),
