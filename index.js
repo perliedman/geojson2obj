@@ -62,9 +62,12 @@ function featuresToObj(features, stream, options) {
             topZ = baseZ + options.featureHeight(f),
             materialName = options.featureMaterial(f),
             vertices = verticesFunc[geom.type](geom.coordinates).map(options.coordToPoint),
-            surfaces = surfacesFunc[geom.type](geom.coordinates, vertices, nIndices);
+            surfaces = surfacesFunc[geom.type](geom.coordinates, vertices, nIndices),
+            name = options.featureName(f);
 
-        stream.write('g ' + options.featureName(f) + '\n');
+        if (name) {
+            stream.write('g ' + name + '\n');
+        }
 
         if (materialName) {
             stream.write('usemtl ' + materialName + '\n');
