@@ -1,6 +1,7 @@
 var extend = require('extend'),
     earcut = require('earcut'),
     buffer = require('turf-buffer'),
+    async = require('async'),
     polygonFaces = function(vertices, baseIndex) {
         return vertices.map(function(v, i) {
             return [
@@ -51,19 +52,27 @@ var extend = require('extend'),
         }
     };
 
-function featuresToObj(features, stream, options) {
-    var nIndices = 1;
+function featureToGeoJson(f, stream, nIndices, options, cb) {
+    var transform = transforms[f.geometry.type],
+        geom = transform ? transform(f, options).geometry : f.geometry;
 
-    features.forEach(function(f) {
-        var transform = transforms[f.geometry.type],
-            geom = transform ? transform(f, options).geometry : f.geometry;
+    async.parallel([
+        function(cb) { options.featureBase(f, cb); },
+        function(cb) { options.featureHeight(f, cb); },
+        function(cb) { options.featureMaterial(f, cb); },
+        function(cb) { options.featureName(f, cb); }
+    ], function(err, data) {
+        if (err) {
+            cb(err);
+            return;
+        }
 
-        var baseZ = options.featureBase(f),
-            topZ = baseZ + options.featureHeight(f),
-            materialName = options.featureMaterial(f),
+        var baseZ = data[0],
+            topZ = baseZ + data[1],
+            materialName = data[2],
             vertices = verticesFunc[geom.type](geom.coordinates).map(options.coordToPoint),
             surfaces = surfacesFunc[geom.type](geom.coordinates, vertices, nIndices),
-            name = options.featureName(f);
+            name = data[3];
 
         if (name) {
             stream.write('g ' + name + '\n');
@@ -83,30 +92,48 @@ function featuresToObj(features, stream, options) {
         });
         stream.write('\n');
 
-        nIndices += vertices.length * 2;
+        cb(undefined, vertices.length * 2);
     });
 }
 
+function featuresToObj(features, stream, cb, options) {
+    var nIndices = 1;
+
+    async.waterfall(features.map(function(f) {
+        return function(cb) {
+            featureToGeoJson(f, stream, nIndices, options, function(err, nVerts) {
+                if (err) {
+                    cb(err);
+                    return;
+                }
+
+                nIndices += nVerts;
+                cb(undefined);
+            });
+        };
+    }), cb);
+}
+
 module.exports = {
-    toObj: function(geojson, stream, options) {
+    toObj: function(geojson, stream, cb, options) {
         options = extend({
-            featureBase: function() {
-                return 0;
+            featureBase: function(f, cb) {
+                process.nextTick(function() { cb(undefined, 0); });
             },
-            featureHeight: function() {
-                return 10;
+            featureHeight: function(f, cb) {
+                process.nextTick(function() { cb(undefined, 10); });
             },
-            lineWidth: function() {
-                return 2;
+            lineWidth: function(f, cb) {
+                process.nextTick(function() { cb(undefined, 2); });
             },
             featureName: (function() {
                 var featureNumber = 0;
-                return function() {
-                    return 'feature_' + (++featureNumber) + ' geojson_export';
+                return function(f, cb) {
+                    cb(undefined, 'feature_' + (++featureNumber) + ' geojson_export');
                 };
             })(),
-            featureMaterial: function() {
-                return undefined;
+            featureMaterial: function(f, cb) {
+                process.nextTick(function() { cb(); });
             },
             coordToPoint: function(c) {
                 return c;
@@ -121,6 +148,6 @@ module.exports = {
             stream.write('mtllib ' + mtllib + '\n');
         });
 
-        return featuresToObj(geojson, stream, options);
+        featuresToObj(geojson, stream, cb, options);
     }
 };

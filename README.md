@@ -8,25 +8,27 @@ A converter from [GeoJSON](http://geojson.org) to
 
 ## API
 
-### toObj(geojson, stream, options)
+### toObj(geojson, stream, callback, options)
 
 Converts the `geojson` to an OBJ, that is written to the `stream`.
+When done, the callback is called; `callback` is a normal Node.js callback
+accepting an error as the first argument.
 
 Note that the `geojson` must be a `Feature` or `FeatureCollection`.
 
 Available options:
 
-* `featureBase`: function `f(feature)` that returns the height of
+* `featureBase`: function `f(feature, callback)` that returns the height of
   a feature's base; by default, a function that always returns 0.
-* `featureHeight`: function `f(feature)` that returns the height of
+* `featureHeight`: function `f(feature, callback)` that returns the height of
   a feature; by default, a function that returns 10 for polygons and
   0.3 for linestrings.
 * `lineWidth`: for line geometries, returns the width of the generated
   geometry; defaults to 2.
-* `featureName`: a function `f(feature)` that returns the OBJ group
+* `featureName`: a function `f(feature, callback)` that returns the OBJ group
   name used for a feature; by default a function that numbers the
   features
-* `featureMaterial`: a function `f(feature)` that returns the name
+* `featureMaterial`: a function `f(feature, callback)` that returns the name
   of the material for a feature; if undefined, the material is
   not changed for this feature; see `mtllib` option below
 * `coordToPoint` a function `f(coordinate)` that returns the
