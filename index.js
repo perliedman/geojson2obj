@@ -18,8 +18,14 @@ var extend = require('extend'),
         })];
     },
     transforms = {
-        'LineString': function(f, options) {
-            return buffer(f, options.lineWidth(f) / 2, 'meters');
+        'LineString': function(f, options, cb) {
+            options.lineWidth(f, function(err, width) {
+                if (err) {
+                    cb(err);
+                    return;
+                }
+                cb(undefined, buffer(f, width / 2, 'meters'));
+            });
         }
     },
     verticesFunc = {
@@ -53,46 +59,56 @@ var extend = require('extend'),
     };
 
 function featureToGeoJson(f, stream, nIndices, options, cb) {
-    var transform = transforms[f.geometry.type],
-        geom = transform ? transform(f, options).geometry : f.geometry;
+    var transformFunc = transforms[f.geometry.type] || function(f, options, cb) {
+        cb(undefined, f);
+    };
 
-    async.parallel([
-        function(cb) { options.featureBase(f, cb); },
-        function(cb) { options.featureHeight(f, cb); },
-        function(cb) { options.featureMaterial(f, cb); },
-        function(cb) { options.featureName(f, cb); }
-    ], function(err, data) {
+    transformFunc(f, options, function(err, transform) {
         if (err) {
             cb(err);
             return;
         }
 
-        var baseZ = data[0],
-            topZ = baseZ + data[1],
-            materialName = data[2],
-            vertices = verticesFunc[geom.type](geom.coordinates).map(options.coordToPoint),
-            surfaces = surfacesFunc[geom.type](geom.coordinates, vertices, nIndices),
-            name = data[3];
+        var geom = transform.geometry;
 
-        if (name) {
-            stream.write('g ' + name + '\n');
-        }
+        async.parallel([
+            function(cb) { options.featureBase(f, cb); },
+            function(cb) { options.featureHeight(f, cb); },
+            function(cb) { options.featureMaterial(f, cb); },
+            function(cb) { options.featureName(f, cb); }
+        ], function(err, data) {
+            if (err) {
+                cb(err);
+                return;
+            }
 
-        if (materialName) {
-            stream.write('usemtl ' + materialName + '\n');
-        }
+            var baseZ = data[0],
+                topZ = baseZ + data[1],
+                materialName = data[2],
+                vertices = verticesFunc[geom.type](geom.coordinates).map(options.coordToPoint),
+                surfaces = surfacesFunc[geom.type](geom.coordinates, vertices, nIndices),
+                name = data[3];
 
-        vertices.forEach(function(v) {
-            stream.write('v ' + v[1] + ' ' + baseZ + ' ' + v[0] + '\n');
-            stream.write('v ' + v[1] + ' ' + topZ + ' ' + v[0] + '\n');
+            if (name) {
+                stream.write('g ' + name + '\n');
+            }
+
+            if (materialName) {
+                stream.write('usemtl ' + materialName + '\n');
+            }
+
+            vertices.forEach(function(v) {
+                stream.write('v ' + v[1] + ' ' + baseZ + ' ' + v[0] + '\n');
+                stream.write('v ' + v[1] + ' ' + topZ + ' ' + v[0] + '\n');
+            });
+
+            surfaces.forEach(function(s) {
+                stream.write('f ' + s.join(' ') + '\n');
+            });
+            stream.write('\n');
+
+            cb(undefined, vertices.length * 2);
         });
-
-        surfaces.forEach(function(s) {
-            stream.write('f ' + s.join(' ') + '\n');
-        });
-        stream.write('\n');
-
-        cb(undefined, vertices.length * 2);
     });
 }
 
