@@ -7,7 +7,7 @@ var convert = require('../'),
     mtl = process.argv[3],
     mtllibs = process.argv.slice(4),
     options = {
-        coordToPoint: localProj.find(geojson).forward,
+        projection: localProj.find(geojson),
         mtllib: mtllibs
     };
 

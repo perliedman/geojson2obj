@@ -1,6 +1,7 @@
 var extend = require('extend'),
     async = require('async'),
-    featureToGeoJson = require('./feature-to-geojson');
+    featureToGeoJson = require('./feature-to-geojson'),
+    proj4 = require('proj4');
 
 function featuresToObj(features, stream, cb, options) {
     async.reduce(features, options.vertexStartIndex || 1, function(vertexIndex, f, cb) {
@@ -36,9 +37,7 @@ module.exports = {
             featureMaterial: function(f, cb) {
                 process.nextTick(function() { cb(); });
             },
-            coordToPoint: function(c) {
-                return c;
-            },
+            projection: proj4.WGS84,
             mtllib: []
         }, options);
 

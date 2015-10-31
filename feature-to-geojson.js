@@ -1,7 +1,9 @@
 var extend = require('extend'),
     earcut = require('earcut'),
-    buffer = require('turf-buffer'),
+    getNormals = require('polyline-normals'),
     async = require('async'),
+    proj4 = require('proj4'),
+    reproject = require('reproject').reproject,
     polygonFaces = function(vertices, baseIndex) {
         return vertices.map(function(v, i) {
             return [
@@ -18,13 +20,32 @@ var extend = require('extend'),
         })];
     },
     transforms = {
-        'LineString': function(f, options, cb) {
+        'LineString': function(f, reprojectedGeometry, options, cb) {
             options.lineWidth(f, function(err, width) {
                 if (err) {
                     cb(err);
                     return;
                 }
-                cb(undefined, buffer(f, width / 2, 'meters'));
+
+                var normals = getNormals(reprojectedGeometry.coordinates),
+                    coords = new Array(reprojectedGeometry.coordinates.length * 2),
+                    transformed = {
+                        type: 'Polygon',
+                        coordinates: [coords]
+                    };
+                
+                reprojectedGeometry.coordinates.forEach(function(c, i) {
+                    var halfWidth = normals[i][1] * width / 2,
+                        dx = normals[i][0][0] * halfWidth,
+                        dy = normals[i][0][1] * halfWidth;
+
+                    coords[i] = [c[0] + dx, c[1] + dy, c[2]];
+                    coords[reprojectedGeometry.coordinates.length * 2 - i - 1] = [c[0] - dx, c[1] - dy, c[2]];
+                });
+                coords.push(coords[0]);
+
+                //console.log(JSON.stringify(f), '=>', JSON.stringify(transformed));
+                cb(undefined, transformed);
             });
         }
     },
@@ -87,17 +108,16 @@ module.exports = function featureToGeoJson(f, stream, nIndices, options, cb) {
         return;
     }
 
-    var transformFunc = transforms[f.geometry.type] || function(f, options, cb) {
-        cb(undefined, f);
-    };
+    var reprojectedGeometry = reproject(f.geometry, proj4.WGS84, options.projection),
+        transformFunc = transforms[f.geometry.type] || function(f, reprojectedGeometry, options, cb) {
+            cb(undefined, reprojectedGeometry);
+        };
 
-    transformFunc(f, options, function(err, transform) {
+    transformFunc(f, reprojectedGeometry, options, function(err, geom) {
         if (err) {
             cb(err);
             return;
         }
-
-        var geom = transform.geometry;
 
         async.parallel([
             function(cb) { options.featureBase(f, cb); },
@@ -126,7 +146,7 @@ module.exports = function featureToGeoJson(f, stream, nIndices, options, cb) {
                 throw 'No surfacesFunc for geometry type ' + geom.type;
             }
 
-            vertices = vFunc(geom.coordinates).map(options.coordToPoint);
+            vertices = vFunc(geom.coordinates);
             surfaces = sFunc(geom.coordinates, vertices, nIndices);
 
             if (name) {
