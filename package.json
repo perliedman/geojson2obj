@@ -20,6 +20,7 @@
     "local-proj": "^1.0.0",
     "polyline-normals": "^2.0.2",
     "proj4": "^2.3.12",
-    "reproject": "^0.1.1"
+    "reproject": "^1.0.0",
+    "turf-meta": "^1.0.2"
   }
 }

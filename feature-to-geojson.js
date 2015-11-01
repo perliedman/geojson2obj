@@ -3,6 +3,7 @@ var extend = require('extend'),
     getNormals = require('polyline-normals'),
     async = require('async'),
     proj4 = require('proj4'),
+    coordEach = require('turf-meta').coordEach,
     reproject = require('reproject').reproject,
     polygonFaces = function(vertices, baseIndex) {
         return vertices.map(function(v, i) {
@@ -120,7 +121,17 @@ module.exports = function featureToGeoJson(f, stream, nIndices, options, cb) {
         }
 
         async.parallel([
-            function(cb) { options.featureBase(f, cb); },
+            geom.coordinates[0][0][2] ? function(cb) { cb(); } : function(cb) {
+                options.featureBase(f, function(err, base) {
+                    if (err) {
+                        cb(err);
+                        return;
+                    }
+
+                    coordEach(geom, function(c) { c[2] = base; });
+                    cb(undefined, base);
+                });
+            },
             function(cb) { options.featureHeight(f, cb); },
             function(cb) { options.featureMaterial(f, cb); },
             function(cb) { options.featureName(f, cb); }
@@ -130,8 +141,7 @@ module.exports = function featureToGeoJson(f, stream, nIndices, options, cb) {
                 return;
             }
 
-            var baseZ = data[0],
-                topZ = baseZ + data[1],
+            var height = data[1],
                 materialName = data[2],
                 vFunc = verticesFunc[geom.type],
                 sFunc = surfacesFunc[geom.type],
@@ -158,8 +168,8 @@ module.exports = function featureToGeoJson(f, stream, nIndices, options, cb) {
             }
 
             vertices.forEach(function(v) {
-                stream.write('v ' + v[1] + ' ' + baseZ + ' ' + v[0] + '\n');
-                stream.write('v ' + v[1] + ' ' + topZ + ' ' + v[0] + '\n');
+                stream.write('v ' + v[1] + ' ' + v[2] + ' ' + v[0] + '\n');
+                stream.write('v ' + v[1] + ' ' + (v[2] + height) + ' ' + v[0] + '\n');
             });
 
             surfaces.forEach(function(s) {
