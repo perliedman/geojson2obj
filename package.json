@@ -14,7 +14,7 @@
   "author": "Per Liedman <per@liedman.net>",
   "license": "ISC",
   "dependencies": {
-    "async": "^1.4.2",
+    "async": "^2.0.0",
     "earcut": "^2.0.2",
     "extend": "^3.0.0",
     "local-proj": "^1.0.0",
