@@ -1,6 +1,8 @@
 GeoJSON to OBJ
 ==============
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/perliedman/geojson2obj.svg)](https://greenkeeper.io/)
+
 A converter from [GeoJSON](http://geojson.org) to 
 [Wavefront OBJ](https://en.wikipedia.org/wiki/Wavefront_.obj_file) format.
 
