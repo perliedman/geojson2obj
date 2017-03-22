@@ -1,4 +1,4 @@
-#!/usr/bin/node
+#!/usr/bin/env node
 
 var convert = require('../'),
     localProj = require('local-proj'),
@@ -19,6 +19,6 @@ if (mtl) {
 
 convert.toObj(geojson, process.stdout, function(err) {
     if (err) {
-        process.stderr.write(err + '\n');
+        process.stderr.write('Error: ' + JSON.stringify(err, null, 2) + '\n');
     }
 }, options);
