@@ -17,7 +17,7 @@
     "async": "^2.0.0",
     "earcut": "^2.0.2",
     "extend": "^3.0.0",
-    "local-proj": "^1.0.0",
+    "local-proj": "^2.0.1",
     "polyline-normals": "^2.0.2",
     "proj4": "^2.4.0",
     "reproject": "^1.0.0",
