@@ -6,6 +6,19 @@ A converter from [GeoJSON](http://geojson.org) to
 
 ![hildedal-render](https://cloud.githubusercontent.com/assets/1246614/10125338/8c915d0e-6570-11e5-84da-4ac7ea0963a6.png)
 
+## Trying it out
+
+There's a small command line example in the `examples` directory, which you can use to try out the library.
+
+Sample command line:
+
+```
+cd examples
+./cli.js norway-coastline.geo.json
+```
+
+It should write an OBJ file to your stdout.
+
 ## API
 
 ### toObj(geojson, stream, callback, options)
