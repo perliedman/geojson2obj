@@ -1,6 +1,6 @@
 {
   "name": "geojson2obj",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Convert GeoJSON into Wavefront OBJ format",
   "main": "index.js",
   "scripts": {
