@@ -11,6 +11,10 @@
     "wavefront",
     "obj"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https@github.com:perliedman/geojson2obj.git"
+  },
   "author": "Per Liedman <per@liedman.net>",
   "license": "ISC",
   "dependencies": {
@@ -21,6 +25,6 @@
     "polyline-normals": "^2.0.2",
     "proj4": "^2.4.0",
     "reproject": "^1.0.0",
-    "turf-meta": "^3.0.12"
+    "@turf/meta": "^3.0.12"
   }
 }
