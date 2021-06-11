@@ -4,6 +4,10 @@ GeoJSON to OBJ
 A converter from [GeoJSON](http://geojson.org) to 
 [Wavefront OBJ](https://en.wikipedia.org/wiki/Wavefront_.obj_file) format.
 
+## Unmaintained
+
+This project has been archived and is not maintained, since it's been a long time since I had reason to work on it.
+
 ![hildedal-render](https://cloud.githubusercontent.com/assets/1246614/10125338/8c915d0e-6570-11e5-84da-4ac7ea0963a6.png)
 
 ## Trying it out
